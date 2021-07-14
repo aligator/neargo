@@ -19,16 +19,16 @@ import (
 
 type Geo struct {
 	CountryCode string
-	PostalCode string
-	PlaceName string
-	AdminName1 string
-	AdminCode1 string
-	AdminName2 string
-	AdminCode2 string
-	AdminName3 string
-	AdminCode3 string
-	Latitude float64
-	Longitude float64
+	PostalCode  string
+	PlaceName   string
+	AdminName1  string
+	AdminCode1  string
+	AdminName2  string
+	AdminCode2  string
+	AdminName3  string
+	AdminCode3  string
+	Latitude    float64
+	Longitude   float64
 }
 
 type GeoSource interface {
@@ -40,7 +40,7 @@ type Geonames struct {
 }
 
 func (g Geonames) readCSV(data io.Reader) ([]Geo, error) {
-	r :=  csv.NewReader(data)
+	r := csv.NewReader(data)
 	r.Comma = '\t'
 
 	var result []Geo
@@ -84,7 +84,7 @@ func (g Geonames) readCSV(data io.Reader) ([]Geo, error) {
 	return result, nil
 }
 
-func (g Geonames) GetGeoData() ([]Geo, error) {
+func (g Geonames) GetGeoData() (result []Geo, err error) {
 	// Download zip.
 	res, err := http.Get(g.URL)
 	if err != nil {
@@ -96,7 +96,19 @@ func (g Geonames) GetGeoData() ([]Geo, error) {
 	if err != nil {
 		return nil, checkpoint.From(err)
 	}
-	defer f.Close()
+	defer func() {
+		// Clean up tmp file.
+		if err = f.Close(); err != nil {
+			err = checkpoint.From(err)
+			return
+		}
+		fmt.Println(f.Name())
+		err = os.Remove(f.Name())
+		if err != nil {
+			err = checkpoint.From(err)
+			return
+		}
+	}()
 	_, err = f.ReadFrom(res.Body)
 	if err != nil {
 		return nil, checkpoint.From(err)
@@ -109,7 +121,6 @@ func (g Geonames) GetGeoData() ([]Geo, error) {
 	}
 	defer reader.Close()
 
-	var result []Geo
 	for _, file := range reader.File {
 		if file.Name != "readme.txt" {
 			csvReader, err := file.Open()
@@ -132,8 +143,10 @@ func (g Geonames) GetGeoData() ([]Geo, error) {
 
 type Neargo struct {
 	Source GeoSource
-	data []Geo
-	index map[string]*Geo
+	data   []Geo
+
+	// index contains references to the data as index[country][zip]
+	index map[string]map[string]*Geo
 }
 
 func (n *Neargo) Init() error {
@@ -145,9 +158,14 @@ func (n *Neargo) Init() error {
 		return err
 	}
 
-	n.index = make(map[string]*Geo)
+	n.index = make(map[string]map[string]*Geo)
 	for i := range n.data {
-		n.index[n.data[i].PostalCode] = &n.data[i]
+		countryIndex, ok := n.index[n.data[i].CountryCode]
+		if !ok {
+			n.index[n.data[i].CountryCode] = make(map[string]*Geo)
+			countryIndex = n.index[n.data[i].CountryCode]
+		}
+		countryIndex[n.data[i].PostalCode] = &n.data[i]
 	}
 
 	return nil
@@ -168,7 +186,6 @@ func Distance(aLat, aLon, bLat, bLon float64) float64 {
 	bRLon = bLon * math.Pi / 180
 	r = 6378100 // Earth radius in METERS
 
-
 	// calculate
 	h := HSin(bRLat-aRLat) + math.Cos(aRLat)*math.Cos(bRLat)*HSin(bRLon-aRLon)
 
@@ -187,18 +204,19 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	query := req.URL.Query().Get("q")
-	geo, ok := n.index[query]
+	country := req.URL.Query().Get("country")
+	zipCode := req.URL.Query().Get("zip")
+	geo, ok := n.index[country][zipCode]
 	if !ok {
 		res.WriteHeader(404)
 		return
 	}
 
 	var result []Geo
-	for _, g := range n.data {
+	for _, g := range n.index[country] {
 		dist := Distance(geo.Latitude, geo.Longitude, g.Latitude, g.Longitude)
 		if dist <= float64(max) {
-			result = append(result, g)
+			result = append(result, *g)
 		}
 	}
 

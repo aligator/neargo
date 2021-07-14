@@ -3,9 +3,10 @@ A simple postal code proximity search webservice.
 It uses geonames.org as source.
 
 Just start it and call
-http://localhost:3141/?q=80331&max=100
+http://localhost:3141/?country=DE&zip=80331&max=100
 
-Param `q` is the postal code query,  
+Param `country` is the country code,  
+Param `zip` is the postal code query,
 Param `max` is the max distance in km.
 
 The result is json in this form:
