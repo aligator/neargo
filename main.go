@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/aligator/neargo/datasource/geonames"
-	"github.com/aligator/neargo/neargo"
+	"github.com/aligator/neargo/server"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	host := flag.String("host", "0.0.0.0:3141", "Host and Port to listen on.")
 	flag.Parse()
 
-	neargo := neargo.Neargo{
+	neargo := server.Neargo{
 		Source: gn,
 	}
 	err := neargo.Init()

@@ -1,4 +1,4 @@
-package neargo
+package server
 
 import "math"
 
