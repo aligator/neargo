@@ -63,7 +63,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "${{ steps.get_version.outputs.VERSION }}"
           prerelease: false
-          title: "Neargo ${{ steps.get_version.outputs.VERSION }}"
+          title: "neargo ${{ steps.get_version.outputs.VERSION }}"
           files: |
             neargo-linux-amd64.tar.gz
             neargo-linux-armv7.tar.gz
