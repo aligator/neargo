@@ -26,28 +26,33 @@ jobs:
       - name: Build and pack neargo for Linux
         run: |
           GOOS=linux GOARCH=amd64 make
-          cp .target/neargo neargo
+          mv .target/neargo neargo
           tar -czf neargo-linux-amd64.tar.gz neargo
+          rm neargo
       - name: Build and pack neargo for Linux ARMv7
         run: |
           GOOS=linux GOARCH=arm GOARM=7 make
-          cp .target/neargo neargo
-          tar -czf neargo-linux-armv7.tar.gz neargo
+          mv .target/neargo neargo
+          tar -czf neargo-linux-armv7.tar.gz neargo+
+          rm neargo
       - name: Build and pack neargo for Linux ARM64
         run: |
           GOOS=linux GOARCH=arm64 make
-          cp .target/neargo neargo
+          mv .target/neargo neargo
           tar -czf neargo-linux-arm64.tar.gz neargo
+          rm neargo
       - name: Build and pack neargo for macOS
         run: |
           GOOS=darwin GOARCH=amd64 make
-          cp .target/neargo neargo
+          mv .target/neargo neargo
           tar -czf neargo-macos-amd64.tar.gz neargo
+          rm neargo
       - name: Build and pack neargo for Windows
         run: |
           GOOS=windows GOARCH=amd64 make
-          cp .target/neargo.exe neargo.exe
+          mv .target/neargo.exe neargo.exe
           zip neargo-windows-amd64.zip neargo.exe
+          rm neargo.exe
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
