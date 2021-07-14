@@ -16,12 +16,12 @@ The result will be sent as json in this form:
     "CountryCode": string // iso country code, 2 characters
     "PostalCode" : string
     "PlaceName"  : string
-    "AdminName1" : string // 1. order subdivision (state) varchar(100)
-    "AdminCode1" : string // 1. order subdivision (state) varchar(20)
-    "AdminName2" : string // 2. order subdivision (county/province) varchar(100)
-    "AdminCode2" : string // 2. order subdivision (county/province) varchar(20)
-    "AdminName3" : string // 3. order subdivision (community) varchar(100)
-    "AdminCode3" : string // 3. order subdivision (community) varchar(20)
+    "AdminName1" : string // 1. order subdivision (state)
+    "AdminCode1" : string // 1. order subdivision (state)
+    "AdminName2" : string // 2. order subdivision (county/province)
+    "AdminCode2" : string // 2. order subdivision (county/province)
+    "AdminName3" : string // 3. order subdivision (community)
+    "AdminCode3" : string // 3. order subdivision (community)
     "Latitude"   : number // estimated latitude (wgs84)
     "Longitude"  : number // estimated longitude (wgs84)
   }
