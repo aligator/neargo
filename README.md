@@ -6,7 +6,7 @@ Just start it and call
 http://localhost:3141/?country=DE&zip=80331&max=100
 
 Param `country` is the country code,  
-Param `zip` is the postal code query,
+Param `zip` is the postal code query,  
 Param `max` is the max distance in km.
 
 The result will be sent as json in this form:
