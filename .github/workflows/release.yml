@@ -1,0 +1,63 @@
+name release
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+      - name: Build
+        run: go build -v .
+
+      - name: Build and pack GoSlice for Linux
+        run: |
+          GOOS=linux GOARCH=amd64 make
+          cp .target/goslice goslice
+          tar -czf goslice-linux-amd64.tar.gz goslice
+      - name: Build and pack GoSlice for Linux ARMv7
+        run: |
+          GOOS=linux GOARCH=arm GOARM=7 make
+          cp .target/goslice goslice
+          tar -czf goslice-linux-armv7.tar.gz goslice
+      - name: Build and pack GoSlice for Linux ARM64
+        run: |
+          GOOS=linux GOARCH=arm64 make
+          cp .target/goslice goslice
+          tar -czf goslice-linux-arm64.tar.gz goslice
+      - name: Build and pack GoSlice for macOS
+        run: |
+          GOOS=darwin GOARCH=amd64 make
+          cp .target/goslice goslice
+          tar -czf goslice-macos-amd64.tar.gz goslice
+      - name: Build and pack GoSlice for Windows
+        run: |
+          GOOS=windows GOARCH=amd64 make
+          cp .target/goslice.exe goslice.exe
+          zip goslice-windows-amd64.zip goslice.exe
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            goslice-linux-amd64.tar.gz
+            goslice-linux-armv7.tar.gz
+            goslice-linux-arm64.tar.gz
+            goslice-macos-amd64.tar.gz
+            goslice-windows-amd64.zip
