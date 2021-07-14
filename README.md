@@ -1,5 +1,5 @@
 # neargo
-A simple postal code proximity search webservice.  
+This is a simple postal code proximity search webservice.  
 It uses geonames.org as source.
 
 Just start it and call
@@ -9,7 +9,7 @@ Param `country` is the country code,
 Param `zip` is the postal code query,
 Param `max` is the max distance in km.
 
-The result is json in this form:
+The result will be sent as json in this form:
 ```
 [
   {
@@ -28,8 +28,10 @@ The result is json in this form:
 ]
 ```
 
-By default it uses `https://download.geonames.org/export/zip/DE.zip` as datasource and therefore only supports germany.  
-However you can use any other zip file from https://download.geonames.org/export/zip by using the following comand line parameter:  
+## CLI
 
-`neargo -geonames-url https://download.geonames.org/export/zip/allCountries.zip` which would use all supported countries.  
-`neargo -host 127.0.0.1:7744` can be used to change the host and port.
+* `neargo -geonames-url https://download.geonames.org/export/zip/allCountries.zip`  
+  By default it uses `https://download.geonames.org/export/zip/DE.zip` as datasource and therefore only supports germany.  
+  However you can use any other zip file from https://download.geonames.org/export/zip by using the `-geonames-url` parameter.
+* `neargo -geonames-file geonames.zip` allows you to use a specific location for the zip file. It will only be downloaded if that file doesn't exist yet. Without this parameter a tmp-file will be used and it will be re-downloaded on every startup.
+* `neargo -host 127.0.0.1:7744` can be used to change the host and port.
