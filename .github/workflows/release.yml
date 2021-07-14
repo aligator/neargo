@@ -54,12 +54,16 @@ jobs:
           cp .target/neargo.exe neargo.exe
           zip neargo-windows-amd64.zip neargo.exe
 
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
-          prerelease: true
-          title: "Development Build"
+          prerelease: false
+          title: "Neargo ${{ steps.get_version.outputs.VERSION }}"
           files: |
             neargo-linux-amd64.tar.gz
             neargo-linux-armv7.tar.gz
