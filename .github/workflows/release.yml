@@ -43,7 +43,7 @@ jobs:
           GOOS=darwin GOARCH=amd64 make
           cp .target/neargo neargo
           tar -czf neargo-macos-amd64.tar.gz neargo
-      - name: Build and pack neargo for macOS arm64 (M1)
+      - name: Build and pack neargo for macOS ARM64 (M1)
         run: |
           GOOS=darwin GOARCH=arm64 make
           cp .target/neargo neargo
