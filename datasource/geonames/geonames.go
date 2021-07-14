@@ -13,7 +13,7 @@ import (
 	"strconv"
 
 	"github.com/aligator/checkpoint"
-	"github.com/aligator/neargo/neargo"
+	"github.com/aligator/neargo/server"
 )
 
 // Geonames implements neargo.GeoSource by downloading and parsing a zip
@@ -31,11 +31,11 @@ func (g *Geonames) Flag() {
 
 // readCSV parses the csv files provided by geonames.org.
 // The csv separator is a \t.
-func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
+func (g Geonames) readCSV(data io.Reader) ([]server.Geo, error) {
 	r := csv.NewReader(data)
 	r.Comma = '\t'
 
-	var result []neargo.Geo
+	var result []server.Geo
 	for {
 		line, err := r.Read()
 		// Stop on EOF.
@@ -62,7 +62,7 @@ func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 		}
 
 		// Map the data.
-		result = append(result, neargo.Geo{
+		result = append(result, server.Geo{
 			CountryCode: line[0],
 			PostalCode:  line[1],
 			PlaceName:   line[2],
@@ -82,7 +82,7 @@ func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 
 // GetGeoData downloads a geonames zip file (if it doesn't exist yet),
 // unpacks it and then parses the csv files in it. (ignoring "readme.txt" file)
-func (g Geonames) GetGeoData() (result []neargo.Geo, err error) {
+func (g Geonames) GetGeoData() (result []server.Geo, err error) {
 	filePath := *g.Path
 	if filePath == "" {
 		// Use a tmp file if no Path is specified.
@@ -117,7 +117,10 @@ func (g Geonames) GetGeoData() (result []neargo.Geo, err error) {
 
 		if os.IsNotExist(err) {
 			// Create it if it doesn't exist.
-			os.Create(*g.Path)
+			_, err := os.Create(*g.Path)
+			if err != nil {
+				return nil, checkpoint.From(err)
+			}
 		}
 
 		// Download zip.
@@ -137,7 +140,10 @@ func (g Geonames) GetGeoData() (result []neargo.Geo, err error) {
 			return nil, checkpoint.From(err)
 		}
 
-		f.Close()
+		err = f.Close()
+		if err != nil {
+			return nil, checkpoint.From(err)
+		}
 	} else if err != nil {
 		return nil, checkpoint.From(err)
 	}
@@ -162,7 +168,10 @@ func (g Geonames) GetGeoData() (result []neargo.Geo, err error) {
 			if err != nil {
 				return nil, checkpoint.From(err)
 			}
-			csvReader.Close()
+			err = csvReader.Close()
+			if err != nil {
+				return nil, checkpoint.From(err)
+			}
 
 			result = append(result, geo...)
 		}
