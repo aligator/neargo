@@ -23,31 +23,31 @@ jobs:
       - name: Build
         run: go build -v .
 
-      - name: Build and pack GoSlice for Linux
+      - name: Build and pack neargo for Linux
         run: |
           GOOS=linux GOARCH=amd64 make
-          cp .target/goslice goslice
-          tar -czf goslice-linux-amd64.tar.gz goslice
-      - name: Build and pack GoSlice for Linux ARMv7
+          cp .target/neargo neargo
+          tar -czf neargo-linux-amd64.tar.gz neargo
+      - name: Build and pack neargo for Linux ARMv7
         run: |
           GOOS=linux GOARCH=arm GOARM=7 make
-          cp .target/goslice goslice
-          tar -czf goslice-linux-armv7.tar.gz goslice
-      - name: Build and pack GoSlice for Linux ARM64
+          cp .target/neargo neargo
+          tar -czf neargo-linux-armv7.tar.gz neargo
+      - name: Build and pack neargo for Linux ARM64
         run: |
           GOOS=linux GOARCH=arm64 make
-          cp .target/goslice goslice
-          tar -czf goslice-linux-arm64.tar.gz goslice
-      - name: Build and pack GoSlice for macOS
+          cp .target/neargo neargo
+          tar -czf neargo-linux-arm64.tar.gz neargo
+      - name: Build and pack neargo for macOS
         run: |
           GOOS=darwin GOARCH=amd64 make
-          cp .target/goslice goslice
-          tar -czf goslice-macos-amd64.tar.gz goslice
-      - name: Build and pack GoSlice for Windows
+          cp .target/neargo neargo
+          tar -czf neargo-macos-amd64.tar.gz neargo
+      - name: Build and pack neargo for Windows
         run: |
           GOOS=windows GOARCH=amd64 make
-          cp .target/goslice.exe goslice.exe
-          zip goslice-windows-amd64.zip goslice.exe
+          cp .target/neargo.exe neargo.exe
+          zip neargo-windows-amd64.zip neargo.exe
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -56,8 +56,8 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            goslice-linux-amd64.tar.gz
-            goslice-linux-armv7.tar.gz
-            goslice-linux-arm64.tar.gz
-            goslice-macos-amd64.tar.gz
-            goslice-windows-amd64.zip
+            neargo-linux-amd64.tar.gz
+            neargo-linux-armv7.tar.gz
+            neargo-linux-arm64.tar.gz
+            neargo-macos-amd64.tar.gz
+            neargo-windows-amd64.zip
