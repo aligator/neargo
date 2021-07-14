@@ -16,16 +16,21 @@ import (
 	"github.com/aligator/neargo/neargo"
 )
 
+// Geonames implements neargo.GeoSource by downloading and parsing a zip
+// file from geonames.org.
 type Geonames struct {
-	url  *string
-	path *string
+	URL  *string
+	Path *string
 }
 
+// Flag adds cli flags to configure Geonames using the cli.
 func (g *Geonames) Flag() {
-	g.url = flag.String("geonames-url", "https://download.geonames.org/export/zip/DE.zip", "url to geonames.org zip - pick one from https://download.geonames.org/export/zip/")
-	g.path = flag.String("geonames-file", "", "path where the zip file should be stored - it will only be downloaded if it doesn't exist yet")
+	g.URL = flag.String("geonames-url", "https://download.geonames.org/export/zip/DE.zip", "URL to geonames.org zip - pick one from https://download.geonames.org/export/zip/")
+	g.Path = flag.String("geonames-file", "", "path where the zip file should be stored - it will only be downloaded if it doesn't exist yet")
 }
 
+// readCSV parses the csv files provided by geonames.org.
+// The csv separator is a \t.
 func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 	r := csv.NewReader(data)
 	r.Comma = '\t'
@@ -33,6 +38,7 @@ func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 	var result []neargo.Geo
 	for {
 		line, err := r.Read()
+		// Stop on EOF.
 		if err == io.EOF {
 			break
 		}
@@ -40,10 +46,12 @@ func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 			return nil, checkpoint.From(err)
 		}
 
+		// Check if all columns exist.
 		if len(line) < 11 {
 			return nil, checkpoint.From(errors.New("not enough columns"))
 		}
 
+		// Convert lon and lat to float.
 		lat, err := strconv.ParseFloat(line[9], 64)
 		if err != nil {
 			return nil, checkpoint.From(err)
@@ -53,6 +61,7 @@ func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 			return nil, checkpoint.From(err)
 		}
 
+		// Map the data.
 		result = append(result, neargo.Geo{
 			CountryCode: line[0],
 			PostalCode:  line[1],
@@ -71,10 +80,12 @@ func (g Geonames) readCSV(data io.Reader) ([]neargo.Geo, error) {
 	return result, nil
 }
 
+// GetGeoData downloads a geonames zip file (if it doesn't exist yet),
+// unpacks it and then parses the csv files in it. (ignoring "readme.txt" file)
 func (g Geonames) GetGeoData() (result []neargo.Geo, err error) {
-	filePath := *g.path
+	filePath := *g.Path
 	if filePath == "" {
-		// Use a tmp file if no path is specified.
+		// Use a tmp file if no Path is specified.
 		f, err := ioutil.TempFile(os.TempDir(), "geonames.*.zip")
 		if err != nil {
 			return nil, checkpoint.From(err)
@@ -101,16 +112,16 @@ func (g Geonames) GetGeoData() (result []neargo.Geo, err error) {
 	log.Println("Using file", filePath)
 
 	// Download zip file if it doesn't exist yet or if it is a tmp file.
-	if _, err := os.Stat(filePath); os.IsNotExist(err) || *g.path == "" {
-		log.Println("Download from", *g.url)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) || *g.Path == "" {
+		log.Println("Download from", *g.URL)
 
 		if os.IsNotExist(err) {
 			// Create it if it doesn't exist.
-			os.Create(*g.path)
+			os.Create(*g.Path)
 		}
 
 		// Download zip.
-		res, err := http.Get(*g.url)
+		res, err := http.Get(*g.URL)
 		if err != nil {
 			return nil, checkpoint.From(err)
 		}

@@ -7,6 +7,7 @@ func HSin(theta float64) float64 {
 	return math.Pow(math.Sin(theta/2), 2)
 }
 
+// Distance calculated in km between the given lat/lon coordinates.
 func Distance(aLat, aLon, bLat, bLon float64) float64 {
 	// convert to radians
 	// must cast radius as float to multiply later

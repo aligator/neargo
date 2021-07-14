@@ -9,6 +9,7 @@ import (
 	"strconv"
 )
 
+// Geo is the model used to store the geo-information.
 type Geo struct {
 	CountryCode string
 	PostalCode  string
@@ -23,18 +24,28 @@ type Geo struct {
 	Longitude   float64
 }
 
+// GeoSource provides a method to load the Geo data from somewhere.
 type GeoSource interface {
 	GetGeoData() ([]Geo, error)
 }
 
+// Neargo is a simple webservice which provides a proximity
+// search by postal code.
 type Neargo struct {
+	// Source can be set to any implementation of GeoSource which defines where
+	// the data comes from.
 	Source GeoSource
-	data   []Geo
 
-	// index contains references to the data as index[country][zip]
+	// data holds all Geo data
+	data []Geo
+
+	// index contains references to the data
+	// as index[country][zip] for faster access.
 	index map[string]map[string]*Geo
 }
 
+// Init has to be called before serving it. It loads and initializes
+// the data using the provided Source.
 func (n *Neargo) Init() error {
 	log.Println("Initialize")
 
@@ -59,6 +70,8 @@ func (n *Neargo) Init() error {
 	return nil
 }
 
+// ServeHTTP responds with the found geo data as json
+// based on the passed query parameters.
 func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	maxStr := req.URL.Query().Get("max")
 	if maxStr == "" {

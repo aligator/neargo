@@ -20,10 +20,10 @@ func main() {
 	}
 	err := neargo.Init()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	log.Println("Serving on " + *host)
 	err = http.ListenAndServe(*host, neargo)
-	panic(err)
+	log.Fatal(err)
 }
