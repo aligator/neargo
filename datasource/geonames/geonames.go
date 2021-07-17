@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -127,6 +128,10 @@ func (g Geonames) GetGeoData() (result []server.Geo, err error) {
 		res, err := http.Get(*g.URL)
 		if err != nil {
 			return nil, checkpoint.From(err)
+		}
+
+		if res.StatusCode != 200 {
+			return nil, checkpoint.From(fmt.Errorf("could not download zip: %v", res.Status))
 		}
 
 		// Save it.
