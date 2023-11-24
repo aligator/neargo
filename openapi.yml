@@ -1,0 +1,128 @@
+openapi: 3.1.0
+info:
+  title: neargo
+  description: |-
+    This is a simple postal code proximity search webservice.  
+    It uses [geonames.org](http://geonames.org) as source.
+  version: v0
+  contact:
+    name: aligator
+    email: me@aligator.dev
+    url: https://github.com/aligator/neargo
+  license:
+    name: MIT
+    url: https://github.com/aligator/neargo/blob/main/LICENSE
+externalDocs:
+  description: Find out more about neargo
+  url: https://github.com/aligator/neargo
+servers:
+  - url: http://127.0.0.1:3141
+tags:
+  - name: neargo
+    description: Main neargo api
+paths:
+  /:
+    get:
+      tags:
+        - neargo
+      summary: Find places around the given postal code.
+      description: You can make your search more specific by providing a radius.
+      operationId: getNearPlaces
+      parameters:
+        - name: country
+          in: query
+          description: Country code defines the target country to search in.
+          required: true
+          schema:
+            type: string
+            default: DE
+            examples: 
+              - DE
+              - CH
+        - name: zip
+          in: query
+          description: Zip code to search for.
+          required: true
+          schema:
+            type: string
+            default: 80331
+        - name: max
+          in: query
+          description: Maximum radius to search for in km. By default it is 100 km.
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+        '400':
+          description: invalid value for 'max'
+        '404':
+          description: combination of 'country' and 'zip' not found
+
+
+components:
+  schemas:
+    Location:
+      type: object
+      properties:
+        CountryCode:
+          type: string
+          examples: 
+            - DE
+            - CH
+        PostalCode:
+          type: string
+          examples:
+            - "85229"
+        PlaceName:
+          type: string
+          examples: 
+            - Markt Indersdorf
+        AdminName1:
+          type: string
+          description: 1. order subdivision (state)
+          examples:
+            - Bayern
+        AdminCode1:
+          type: string
+          description: 1. order subdivision (state)
+          examples:
+            - BY
+        AdminName2:
+          type: string
+          description: 2. order subdivision (county/province)
+          examples:
+            - Upper Bavaria
+        AdminCode2:
+          type: string
+          description: 2. order subdivision (county/province)
+          examples:
+            - "091"
+        AdminName3:
+          type: string
+          description: 3. order subdivision (community)
+          examples:
+            - Landkreis Dachau
+        AdminCode3:
+          type: string
+          description: 3. order subdivision (community)
+          examples:
+            - "09174"
+        Latitude:
+          type: number
+          format: double
+          description: Latitude location
+          examples: [48.3606]
+        Longitude:
+          type: number
+          format: double
+          description: Longitude location
+          examples: [11.3779]

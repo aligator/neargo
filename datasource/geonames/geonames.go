@@ -4,17 +4,17 @@ import (
 	"archive/zip"
 	"encoding/csv"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/aligator/checkpoint"
 	"github.com/aligator/neargo/server"
+	"github.com/spf13/pflag"
 )
 
 // Geonames implements neargo.GeoSource by downloading and parsing a zip
@@ -25,9 +25,9 @@ type Geonames struct {
 }
 
 // Flag adds cli flags to configure Geonames using the cli.
-func (g *Geonames) Flag() {
-	g.URL = flag.String("geonames-url", "https://download.geonames.org/export/zip/DE.zip", "URL to geonames.org zip - pick one from https://download.geonames.org/export/zip/")
-	g.Path = flag.String("geonames-file", "", "path where the zip file should be stored - it will only be downloaded if it doesn't exist yet")
+func (g *Geonames) PFlag() {
+	g.URL = pflag.String("geonames-url", "https://download.geonames.org/export/zip/DE.zip", "URL to geonames.org zip - pick one from https://download.geonames.org/export/zip/")
+	g.Path = pflag.String("geonames-file", "", "path where the zip file should be stored - it will only be downloaded if it doesn't exist yet")
 }
 
 // readCSV parses the csv files provided by geonames.org.
@@ -87,7 +87,7 @@ func (g Geonames) GetGeoData() (result []server.Geo, err error) {
 	filePath := *g.Path
 	if filePath == "" {
 		// Use a tmp file if no Path is specified.
-		f, err := ioutil.TempFile(os.TempDir(), "geonames.*.zip")
+		f, err := os.CreateTemp(os.TempDir(), "geonames.*.zip")
 		if err != nil {
 			return nil, checkpoint.From(err)
 		}
@@ -108,6 +108,11 @@ func (g Geonames) GetGeoData() (result []server.Geo, err error) {
 		}()
 
 		filePath = f.Name()
+	}
+
+	filePath, err = filepath.Abs(filePath)
+	if err != nil {
+		log.Panic(err)
 	}
 
 	log.Println("Using file", filePath)

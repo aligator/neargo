@@ -70,9 +70,25 @@ func (n *Neargo) Init() error {
 	return nil
 }
 
+type ErrorMessage struct {
+	Message string
+}
+
+func writeErrorMessage(res http.ResponseWriter, message string) {
+	enc := json.NewEncoder(res)
+	err := enc.Encode(ErrorMessage{
+		Message: message,
+	})
+	if err != nil {
+		_, _ = fmt.Fprint(os.Stderr, err.Error())
+	}
+}
+
 // ServeHTTP responds with the found geo data as json
 // based on the passed query parameters.
 func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
+
 	maxStr := req.URL.Query().Get("max")
 	if maxStr == "" {
 		maxStr = "100"
@@ -81,6 +97,7 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		_, _ = fmt.Fprint(os.Stderr, err.Error())
 		res.WriteHeader(400)
+		writeErrorMessage(res, "invalid value for 'max'")
 		return
 	}
 
@@ -89,6 +106,7 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	geo, ok := n.index[country][zipCode]
 	if !ok {
 		res.WriteHeader(404)
+		writeErrorMessage(res, "combination of 'country' and 'zip' not found")
 		return
 	}
 
