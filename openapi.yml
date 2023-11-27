@@ -126,3 +126,8 @@ components:
           format: double
           description: Longitude location
           examples: [11.3779]
+        Distance:
+          type: number
+          format: double
+          description: Distance from the requested zip in km
+          examples: [0, 3.009281665051353]

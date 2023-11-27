@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 )
 
@@ -22,6 +23,11 @@ type Geo struct {
 	AdminCode3  string
 	Latitude    float64
 	Longitude   float64
+}
+
+type GeoDistance struct {
+	Geo
+	Distance float64
 }
 
 // GeoSource provides a method to load the Geo data from somewhere.
@@ -110,13 +116,25 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var result []Geo
+	var result []GeoDistance
 	for _, g := range n.index[country] {
 		dist := Distance(geo.Latitude, geo.Longitude, g.Latitude, g.Longitude)
 		if dist <= float64(max) {
-			result = append(result, *g)
+			result = append(result, GeoDistance{
+				Geo:      *g,
+				Distance: dist,
+			})
 		}
 	}
+
+	slices.SortStableFunc(result, func(a, b GeoDistance) int {
+		if a.Distance > b.Distance {
+			return 1
+		} else if a.Distance < b.Distance {
+			return -1
+		}
+		return 0
+	})
 
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
