@@ -47,7 +47,7 @@ type Neargo struct {
 
 	// index contains references to the data
 	// as index[country][zip] for faster access.
-	index map[string]map[string]*Geo
+	index map[string]map[string][]*Geo
 }
 
 // Init has to be called before serving it. It loads and initializes
@@ -61,14 +61,15 @@ func (n *Neargo) Init() error {
 		return err
 	}
 
-	n.index = make(map[string]map[string]*Geo)
+	n.index = make(map[string]map[string][]*Geo)
 	for i := range n.data {
 		countryIndex, ok := n.index[n.data[i].CountryCode]
 		if !ok {
-			n.index[n.data[i].CountryCode] = make(map[string]*Geo)
+			n.index[n.data[i].CountryCode] = make(map[string][]*Geo)
 			countryIndex = n.index[n.data[i].CountryCode]
 		}
-		countryIndex[n.data[i].PostalCode] = &n.data[i]
+
+		countryIndex[n.data[i].PostalCode] = append(countryIndex[n.data[i].PostalCode], &n.data[i])
 	}
 
 	log.Println("Initialized")
@@ -109,8 +110,8 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	country := req.URL.Query().Get("country")
 	zipCode := req.URL.Query().Get("zip")
-	geo, ok := n.index[country][zipCode]
-	if !ok {
+	exactGeos, ok := n.index[country][zipCode]
+	if !ok || len(exactGeos) <= 0 {
 		res.WriteHeader(404)
 		writeErrorMessage(res, "combination of 'country' and 'zip' not found")
 		return
@@ -119,22 +120,38 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	// If max is < 0, the api will only match the equal zip codes.
 	var result []GeoDistance
 	if max < 0 {
-		for _, g := range n.index[country] {
-			if g.PostalCode == zipCode {
-				result = append(result, GeoDistance{
-					Geo:      *g,
-					Distance: 0,
-				})
+		for _, geos := range n.index[country] {
+			for _, geo := range geos {
+				if geo.PostalCode == zipCode {
+					result = append(result, GeoDistance{
+						Geo:      *geo,
+						Distance: 0,
+					})
+				}
 			}
 		}
 	} else {
-		for _, g := range n.index[country] {
-			dist := Distance(geo.Latitude, geo.Longitude, g.Latitude, g.Longitude)
-			if dist <= float64(max) {
-				result = append(result, GeoDistance{
-					Geo:      *g,
-					Distance: dist,
-				})
+		deduplicateSet := make(map[*Geo]bool)
+
+		// If a zip code exists multiple times, do the search for each of them.
+		for _, exactGeo := range exactGeos {
+			for _, geos := range n.index[country] {
+				for _, geo := range geos {
+					dist := Distance(exactGeo.Latitude, exactGeo.Longitude, geo.Latitude, geo.Longitude)
+					if dist <= float64(max) {
+						// Skip already added geos
+						if _, ok := deduplicateSet[geo]; ok {
+							fmt.Println("continue")
+							continue
+						}
+
+						result = append(result, GeoDistance{
+							Geo:      *geo,
+							Distance: dist,
+						})
+						deduplicateSet[geo] = true
+					}
+				}
 			}
 		}
 		slices.SortStableFunc(result, func(a, b GeoDistance) int {
