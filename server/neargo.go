@@ -141,7 +141,6 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 					if dist <= float64(max) {
 						// Skip already added geos
 						if _, ok := deduplicateSet[geo]; ok {
-							fmt.Println("continue")
 							continue
 						}
 
