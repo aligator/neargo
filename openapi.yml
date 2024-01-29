@@ -48,7 +48,9 @@ paths:
             default: 80331
         - name: max
           in: query
-          description: Maximum radius to search for in km. By default it is 100 km.
+          description: |
+            Maximum radius to search for in km. By default it is 100 km.
+            You can pass -1 which will disable the proximity search and instead only return entries with an equal zip code.
           required: false
           schema:
             type: integer

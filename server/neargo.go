@@ -116,25 +116,37 @@ func (n Neargo) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// If max is < 0, the api will only match the equal zip codes.
 	var result []GeoDistance
-	for _, g := range n.index[country] {
-		dist := Distance(geo.Latitude, geo.Longitude, g.Latitude, g.Longitude)
-		if dist <= float64(max) {
-			result = append(result, GeoDistance{
-				Geo:      *g,
-				Distance: dist,
-			})
+	if max < 0 {
+		for _, g := range n.index[country] {
+			if g.PostalCode == zipCode {
+				result = append(result, GeoDistance{
+					Geo:      *g,
+					Distance: 0,
+				})
+			}
 		}
-	}
+	} else {
+		for _, g := range n.index[country] {
+			dist := Distance(geo.Latitude, geo.Longitude, g.Latitude, g.Longitude)
+			if dist <= float64(max) {
+				result = append(result, GeoDistance{
+					Geo:      *g,
+					Distance: dist,
+				})
+			}
+		}
+		slices.SortStableFunc(result, func(a, b GeoDistance) int {
+			if a.Distance > b.Distance {
+				return 1
+			} else if a.Distance < b.Distance {
+				return -1
+			}
 
-	slices.SortStableFunc(result, func(a, b GeoDistance) int {
-		if a.Distance > b.Distance {
-			return 1
-		} else if a.Distance < b.Distance {
-			return -1
-		}
-		return 0
-	})
+			return 0
+		})
+	}
 
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
